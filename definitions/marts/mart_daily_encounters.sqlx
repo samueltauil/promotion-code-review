@@ -7,6 +7,33 @@ config {
   }
 }
 
+WITH encounters AS (
+  SELECT
+    encounter_id,
+    patient_id,
+    encounter_date,
+    facility_code,
+    encounter_type,
+    patient_age_at_encounter,
+    LAG(encounter_date) OVER (
+      PARTITION BY patient_id
+      ORDER BY encounter_date
+    ) AS previous_encounter_date
+  FROM
+    ${ref("stg_patient_encounters")}
+),
+
+readmissions AS (
+  SELECT
+    *,
+    CASE
+      WHEN DATE_DIFF(encounter_date, previous_encounter_date, DAY) <= 30
+      THEN 1
+      ELSE 0
+    END AS is_readmission
+  FROM encounters
+)
+
 SELECT
   encounter_date,
   facility_code,
@@ -16,7 +43,7 @@ SELECT
   AVG(patient_age_at_encounter) AS avg_patient_age,
   COUNT(DISTINCT CASE WHEN encounter_type = 'emergency' THEN encounter_id END) AS emergency_count
 FROM
-  ${ref("stg_patient_encounters")}
+  readmissions
 WHERE
   encounter_date >= '2024-01-01'
   AND encounter_type != 'scheduled_only'
