@@ -1,0 +1,7 @@
+{
+  "defaultSchema": "analytics",
+  "assertionSchema": "analytics_assertions",
+  "warehouse": "bigquery",
+  "defaultDatabase": "demo-data-project",
+  "defaultLocation": "US"
+}

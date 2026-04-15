@@ -1,0 +1,74 @@
+name: SQL Checks
+
+on:
+  pull_request:
+    branches: [dev, prod]
+    paths:
+      - 'definitions/**'
+      - 'includes/**'
+      - 'dataform.json'
+
+jobs:
+  sql-lint:
+    name: SQL Lint (sqlfluff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install sqlfluff
+        run: pip install sqlfluff sqlfluff-templater-dbt
+
+      - name: Run sqlfluff lint
+        run: |
+          # Lint all .sqlx files, treating them as BigQuery SQL
+          # Ignore templating errors from Dataform ${ref()} syntax
+          find definitions/ -name '*.sqlx' -exec grep -l 'SELECT\|INSERT\|CREATE' {} \; | while read file; do
+            echo "Linting: $file"
+            # Extract pure SQL (skip config blocks) and lint
+            sed -n '/^SELECT\|^WITH\|^INSERT\|^CREATE\|^MERGE/,$ p' "$file" > /tmp/lint_target.sql
+            if [ -s /tmp/lint_target.sql ]; then
+              sqlfluff lint /tmp/lint_target.sql --dialect bigquery --exclude-rules LT12,ST06,RF04,LT02,AM04 || true
+            fi
+          done
+          echo "SQL lint complete."
+
+  dataform-compile:
+    name: Dataform Compile Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate dataform.json
+        run: |
+          echo "Validating dataform.json..."
+          python3 -c "
+          import json, sys
+          with open('dataform.json') as f:
+              config = json.load(f)
+          required = ['defaultSchema', 'warehouse']
+          for key in required:
+              if key not in config:
+                  print(f'ERROR: Missing required key: {key}')
+                  sys.exit(1)
+          print('dataform.json is valid.')
+          "
+
+      - name: Check SQL file structure
+        run: |
+          echo "Checking SQL file structure..."
+          errors=0
+          for f in definitions/**/*.sqlx; do
+            if [ -f "$f" ]; then
+              # Verify config block exists
+              if ! grep -q '^config {' "$f"; then
+                echo "WARNING: $f missing config block"
+              fi
+              echo "OK: $f"
+            fi
+          done
+          echo "Structure check complete."

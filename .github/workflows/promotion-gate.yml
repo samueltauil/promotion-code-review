@@ -1,0 +1,44 @@
+name: Production Promotion Gate
+
+on:
+  pull_request:
+    branches: [prod]
+
+jobs:
+  promotion-gate:
+    name: Promotion Policy Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            const requiredLabels = ['hotfix', 'feature', 'breaking-change'];
+            const hasRequired = labels.some(l => requiredLabels.includes(l));
+
+            console.log(`PR labels: ${labels.join(', ') || '(none)'}`);
+            console.log(`Required (at least one of): ${requiredLabels.join(', ')}`);
+
+            if (!hasRequired) {
+              core.setFailed(
+                `❌ Production PRs must have at least one label: ${requiredLabels.join(', ')}.\n` +
+                `This ensures changes are categorized for release tracking and rollback planning.`
+              );
+            } else {
+              console.log('✅ Label policy satisfied.');
+            }
+
+      - name: Check PR description completeness
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const requiredSections = ['Summary', 'Testing Evidence', 'Risk Assessment', 'Rollback Plan'];
+            const missing = requiredSections.filter(s => !body.includes(s));
+
+            if (missing.length > 0) {
+              core.warning(`⚠️ PR description is missing sections: ${missing.join(', ')}. Please use the PR template.`);
+            } else {
+              console.log('✅ PR description contains all required sections.');
+            }

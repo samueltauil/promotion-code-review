@@ -1,0 +1,11 @@
+# Code Owners — defines required reviewers for specific paths
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Production data marts require senior review
+definitions/marts/    @samueltauil
+
+# All Dataform config changes require review
+dataform.json         @samueltauil
+
+# CI/CD workflow changes require review
+.github/workflows/    @samueltauil

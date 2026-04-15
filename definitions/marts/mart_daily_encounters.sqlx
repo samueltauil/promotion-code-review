@@ -1,0 +1,24 @@
+config {
+  type: "table",
+  schema: "analytics",
+  description: "Daily encounter summary by facility and encounter type. Used for operational dashboards.",
+  assertions: {
+    nonNull: ["encounter_date", "facility_code", "encounter_count"]
+  }
+}
+
+SELECT
+  encounter_date,
+  facility_code,
+  encounter_type,
+  COUNT(DISTINCT encounter_id) AS encounter_count,
+  COUNT(DISTINCT patient_id) AS unique_patients,
+  AVG(patient_age_at_encounter) AS avg_patient_age
+FROM
+  ${ref("stg_patient_encounters")}
+WHERE
+  encounter_date >= '2023-01-01'
+GROUP BY
+  encounter_date,
+  facility_code,
+  encounter_type

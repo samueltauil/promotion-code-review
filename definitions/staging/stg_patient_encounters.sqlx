@@ -1,0 +1,27 @@
+config {
+  type: "view",
+  schema: "staging",
+  description: "Cleaned and joined patient encounters with basic validation filters."
+}
+
+SELECT
+  e.encounter_id,
+  e.patient_id,
+  p.first_name,
+  p.last_name,
+  e.encounter_type,
+  e.encounter_date,
+  e.provider_id,
+  e.diagnosis_code,
+  e.facility_code,
+  e.status,
+  p.date_of_birth,
+  DATE_DIFF(e.encounter_date, p.date_of_birth, YEAR) AS patient_age_at_encounter
+FROM
+  ${ref("raw", "encounters")} AS e
+INNER JOIN
+  ${ref("raw", "patients")} AS p
+  ON e.patient_id = p.patient_id
+WHERE
+  e.status != 'cancelled'
+  AND e.encounter_date >= '2023-01-01'

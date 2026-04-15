@@ -1,0 +1,10 @@
+config {
+  type: "declaration",
+  database: "demo-data-project",
+  schema: "raw",
+  name: "encounters"
+}
+-- Source declaration for the raw encounters table.
+-- Schema: encounter_id (STRING), patient_id (STRING), encounter_type (STRING),
+--         encounter_date (DATE), provider_id (STRING), diagnosis_code (STRING),
+--         facility_code (STRING), status (STRING)
