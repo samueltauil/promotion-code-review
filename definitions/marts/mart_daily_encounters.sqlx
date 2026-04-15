@@ -13,12 +13,11 @@ SELECT
   encounter_type,
   COUNT(DISTINCT encounter_id) AS encounter_count,
   COUNT(DISTINCT patient_id) AS unique_patients,
-  AVG(patient_age_at_encounter) AS avg_patient_age,
-  COUNT(DISTINCT CASE WHEN encounter_type = 'emergency' THEN encounter_id END) AS emergency_count
+  AVG(patient_age_at_encounter) AS avg_patient_age
 FROM
   ${ref("stg_patient_encounters")}
 WHERE
-  encounter_date >= '2024-01-01'
+  encounter_date >= '2023-01-01'
   AND encounter_type != 'scheduled_only'
 GROUP BY
   encounter_date,
