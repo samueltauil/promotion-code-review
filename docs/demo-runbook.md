@@ -55,7 +55,28 @@ Show the repo README and explain the folder structure:
 - Merging one PR does not drag the other's changes along — this is the core difference from working directly on `dev`
 - Conflicts are surfaced early in the PR, not discovered during a production deploy
 
-> **Teaching moment — "unexpected merge behavior":** If the team has seen a developer branch absorb all of `dev`'s changes after a merge, explain that this happens when you merge *from* `dev` *into* your branch (to catch up). This is expected Git behavior — not a bug. Feature branches avoid this by staying short-lived and merging *into* `dev` via PR only when ready. Show the PR diff to prove: only the feature's changes are included.
+> **🔑 Teaching moment — "unexpected merge behavior" (this is the key insight for this audience):**
+>
+> The team has reported that merging from a developer branch into `dev` or `prod` causes the developer branch to receive *all* changes from that target branch — not just the resolved conflicts. This is confusing and feels like a bug, but it's actually expected Git behavior. Here's what's happening:
+>
+> **What they're doing today:**
+> 1. Developer works on their branch
+> 2. They merge *from* `dev` *into* their branch (to "catch up" or resolve conflicts)
+> 3. Their branch now contains **all of dev's commits** — including other developers' unfinished work
+> 4. When they later merge their branch into `prod`, all of that extra work comes along
+>
+> **This is the root cause of unintended promotion.** It's not a GitHub bug — it's how Git merge works. A merge combines *both* histories. Once you merge `dev` into your branch, your branch *is* `dev` plus your changes.
+>
+> **How feature branches fix this:**
+> 1. Developer creates a short-lived feature branch from `dev`
+> 2. They work *only* on their branch — they never merge `dev` back into it
+> 3. When ready, they open a PR *into* `dev` (one-way merge via PR)
+> 4. The PR's "Files changed" tab shows **only their changes** — proof that nothing else is coming along
+> 5. If there's a conflict, they resolve it *in the PR* (or rebase), not by merging `dev` into their branch
+>
+> **Demo this live:** Click on the "Files changed" tab of the readmission metric PR. Point out: "See — only the readmission metric changes are here. No other developer's work. No staging changes. This is what gets merged into `dev`, and nothing else."
+>
+> **If they ask "but what if I need to catch up with dev?"** — the answer is `git rebase dev` (rewrites your commits on top of dev's latest) instead of `git merge dev` (pulls dev's history into your branch). Rebasing keeps your branch clean. But ideally, feature branches are short-lived enough that you rarely need to.
 
 ---
 
