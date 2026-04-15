@@ -1,11 +1,38 @@
 config {
   type: "table",
   schema: "analytics",
-  description: "Daily encounter summary by facility and encounter type. Used for operational dashboards.",
+  description: "Daily encounter summary by facility and encounter type, including 30-day readmission rate.",
   assertions: {
     nonNull: ["encounter_date", "facility_code", "encounter_count"]
   }
 }
+
+WITH encounters AS (
+  SELECT
+    encounter_id,
+    patient_id,
+    encounter_date,
+    facility_code,
+    encounter_type,
+    patient_age_at_encounter,
+    LAG(encounter_date) OVER (
+      PARTITION BY patient_id
+      ORDER BY encounter_date
+    ) AS previous_encounter_date
+  FROM
+    ${ref("stg_patient_encounters")}
+),
+
+readmissions AS (
+  SELECT
+    *,
+    CASE
+      WHEN DATE_DIFF(encounter_date, previous_encounter_date, DAY) <= 30
+      THEN 1
+      ELSE 0
+    END AS is_readmission
+  FROM encounters
+)
 
 SELECT
   encounter_date,
@@ -13,9 +40,11 @@ SELECT
   encounter_type,
   COUNT(DISTINCT encounter_id) AS encounter_count,
   COUNT(DISTINCT patient_id) AS unique_patients,
-  AVG(patient_age_at_encounter) AS avg_patient_age
+  AVG(patient_age_at_encounter) AS avg_patient_age,
+  SUM(is_readmission) AS readmission_count,
+  ROUND(SAFE_DIVIDE(SUM(is_readmission), COUNT(DISTINCT encounter_id)) * 100, 2) AS readmission_rate_pct
 FROM
-  ${ref("stg_patient_encounters")}
+  readmissions
 WHERE
   encounter_date >= '2023-01-01'
 GROUP BY
