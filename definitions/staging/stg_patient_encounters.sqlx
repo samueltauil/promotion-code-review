@@ -24,4 +24,3 @@ INNER JOIN
   ON e.patient_id = p.patient_id
 WHERE
   e.status != 'cancelled'
-  AND e.encounter_date >= '2023-01-01'

@@ -7,6 +7,10 @@ config {
   }
 }
 
+js {
+  const { DATA_START_DATE, READMISSION_WINDOW_DAYS } = require("../../includes/constants");
+}
+
 WITH encounters AS (
   SELECT
     encounter_id,
@@ -17,17 +21,20 @@ WITH encounters AS (
     patient_age_at_encounter,
     LAG(encounter_date) OVER (
       PARTITION BY patient_id
-      ORDER BY encounter_date
+      ORDER BY encounter_date, encounter_id
     ) AS previous_encounter_date
   FROM
     ${ref("stg_patient_encounters")}
+  WHERE
+    encounter_date >= DATE_SUB(DATE('${DATA_START_DATE}'), INTERVAL ${READMISSION_WINDOW_DAYS} DAY)
 ),
 
 readmissions AS (
   SELECT
     *,
     CASE
-      WHEN DATE_DIFF(encounter_date, previous_encounter_date, DAY) <= 30
+      WHEN previous_encounter_date IS NOT NULL
+        AND DATE_DIFF(encounter_date, previous_encounter_date, DAY) BETWEEN 1 AND ${READMISSION_WINDOW_DAYS}
       THEN 1
       ELSE 0
     END AS is_readmission
@@ -46,7 +53,7 @@ SELECT
 FROM
   readmissions
 WHERE
-  encounter_date >= '2023-01-01'
+  encounter_date >= DATE('${DATA_START_DATE}')
 GROUP BY
   encounter_date,
   facility_code,
