@@ -13,7 +13,7 @@ export GH_PAGER=""
 
 # Commit SHAs (pinned at demo setup time)
 SHA_BASE="9a59e3dee9198bad5ea3b9601f3d3861dbeb216d"       # Initial commit (dev/prod base)
-SHA_MAIN="ce133162b39ae709158744c3fa95c81106bbc9d1"       # main tip (includes docs + reset script)
+SHA_MAIN="de64597d6a604a941eb9711d3abb0c2a34cb5b0b"       # main tip (includes docs + reset script)
 SHA_FEATURE_A="97a789a3298b293f2014abf7df8a0c7445bd2f7b"  # feature/add-readmission-metric
 SHA_FEATURE_B="e2746a88cb5502511b70d7533199fce6dd43f403"  # feature/update-encounter-logic
 SHA_HOTFIX="776061b281d9826cf8a48eb153505cd776a110d5"      # hotfix/fix-encounter-date-filter
