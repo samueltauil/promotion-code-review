@@ -9,6 +9,7 @@ set -euo pipefail
 # =============================================================================
 
 REPO="samueltauil/promotion-code-review"
+export GH_PAGER=""
 
 # Commit SHAs (pinned at demo setup time)
 SHA_BASE="9a59e3dee9198bad5ea3b9601f3d3861dbeb216d"       # Initial commit (dev/prod base)
@@ -84,7 +85,7 @@ echo ""
 # ---- Step 4: Re-apply branch protections ----
 echo "Step 4/6: Re-applying branch protections..."
 
-gh api "repos/$REPO/branches/dev/protection" -X PUT --input - <<'DEVPROT'
+gh api "repos/$REPO/branches/dev/protection" -X PUT --silent --input - <<'DEVPROT'
 {
   "required_status_checks": {
     "strict": true,
@@ -101,7 +102,7 @@ gh api "repos/$REPO/branches/dev/protection" -X PUT --input - <<'DEVPROT'
 DEVPROT
 echo "  dev protection set."
 
-gh api "repos/$REPO/branches/prod/protection" -X PUT --input - <<'PRODPROT'
+gh api "repos/$REPO/branches/prod/protection" -X PUT --silent --input - <<'PRODPROT'
 {
   "required_status_checks": {
     "strict": true,
@@ -310,7 +311,7 @@ echo ""
 
 # ---- Step 6: Add review comment on PR #1 ----
 echo "Step 6/6: Adding review comment on PR #$PR1_NUM..."
-gh api "repos/$REPO/pulls/$PR1_NUM/reviews" -X POST --input - <<REVIEW
+gh api "repos/$REPO/pulls/$PR1_NUM/reviews" -X POST --silent --input - <<REVIEW
 {
   "body": "Overall looks good! A couple of questions:\n\n1. **30-day threshold** — Is 30 days the right window? Some teams use 7-day for acute and 90-day for chronic. Should we make this configurable via \`includes/constants.js\`?\n2. **Performance** — The LAG window function will scan all historical encounters. For large datasets, consider adding a partition by \`facility_code\` or limiting the lookback window.\n3. **SAFE_DIVIDE** — Good use of SAFE_DIVIDE to handle zero-encounter edge cases. 👍\n\nApprove once the threshold question is resolved.",
   "event": "COMMENT"
