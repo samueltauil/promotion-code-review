@@ -93,6 +93,6 @@ uniqueness constraints, referential integrity, and value range validations.
 Copilot code review can be enabled at the repository level:
 1. Go to **Settings → Copilot → Code review**
 2. Enable **Copilot code review**
-3. Optionally add custom review instructions in a `.github/copilot-code-review-instructions.md` file
+3. Optionally add custom instructions in a `.github/copilot-instructions.md` file
 
 For this demo repo, Copilot is configured to review all PRs automatically.
