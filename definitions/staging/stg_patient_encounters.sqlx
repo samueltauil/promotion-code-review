@@ -23,5 +23,7 @@ INNER JOIN
   ${ref("raw", "patients")} AS p
   ON e.patient_id = p.patient_id
 WHERE
-  e.status != 'cancelled'
+  e.status NOT IN ('cancelled', 'entered_in_error')
+  AND e.encounter_date IS NOT NULL
   AND e.encounter_date >= '2023-01-01'
+  AND e.encounter_date <= CURRENT_DATE()
