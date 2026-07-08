@@ -1,0 +1,49 @@
+name: Data Standards Gate
+
+# A fail-closed check that enforces mandated data standards deterministically.
+#
+# The existing sql-checks workflow lints for style and the promotion-gate checks
+# PR metadata. This workflow is different in kind: it turns the review heuristics
+# documented in docs/copilot-playbook.md (SELECT * usage, unbounded date ranges,
+# PII in marts) into a check that FAILS the build on violation, rather than a
+# prompt a reviewer may or may not run.
+#
+# Why this matters for automated authors: when the change on a PR was written by
+# an agent, an advisory instruction it ignores produces no signal. A deterministic
+# gate refuses the merge every time, with no human attention required. This is the
+# difference between distributing the standard and enforcing it.
+#
+# NOTE: A workflow only becomes a true gate once it is added as a REQUIRED status
+# check under branch protection (Settings -> Branches -> branch protection rule for
+# `prod` -> Require status checks -> select "Data Standards Gate"). Until then it
+# reports but does not block. That final step is what converts a suggestion into
+# control.
+
+on:
+  pull_request:
+    branches: [dev, prod]
+    paths:
+      - 'definitions/**'
+      - 'includes/**'
+      - 'dataform.json'
+      - 'scripts/check_data_standards.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  data-standards:
+    name: Enforce Mandated Data Standards
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run data standards gate (fail-closed)
+        run: python3 scripts/check_data_standards.py
